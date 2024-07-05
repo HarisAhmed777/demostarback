@@ -18,7 +18,7 @@ const path = require('path');
 const app = express();
 
 app.use(cors({
-    origin: ["http://localhost:5173","https://capable-medovik-acac7d.netlify.app"],
+    origin: ["https://capable-medovik-acac7d.netlify.app","http://localhost:5173"],
     methods: ["GET", "POST", "PUT"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -301,6 +301,7 @@ app.get("*",(req,res)=>{
 })
 
     app.post("/resetpassword/:_id/:token", async (req, res) => {
+        console.log("entering into reset password");
         const { _id, token } = req.params;
         const { password } = req.body;
         console.log(_id);

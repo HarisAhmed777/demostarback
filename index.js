@@ -114,9 +114,7 @@ app.post('/validate-promocode', async (req, res) => {
           return res.status(400).json({ status: 'error', message: 'Invalid promo code' });
         }
       }
-      
-      // Apply discount
-      const discountedAmount = totalamount - (totalamount * discount / 100);
+      const discountedAmount = totalamount;
       
       const newBooking = new BookingModel({ 
         name, 

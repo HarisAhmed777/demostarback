@@ -18,11 +18,9 @@ const offers = [
 Offer.insertMany(offers)
   .then(() => {
     console.log('Offers added');
-    mongoose.connection.close();
   })
   .catch((err) => {
     console.error(err);
-    mongoose.connection.close();
   });
 
   module.exports = Offer;

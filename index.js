@@ -11,6 +11,7 @@ const BookingModel = require('./models/booking');
 const FeedbackModel = require('./models/feedback');
 const PurchasePackageModel = require('./models/Packagepurshase');
 const Form = require('./models/formmodel.js');
+const Offer = require('./models/offer');
 var nodemailer = require("nodemailer");
 
 const path = require('path');
@@ -83,20 +84,49 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post('/booking', async (req, res) => {
+app.post('/validate-promocode', async (req, res) => {
+    const { promocode } = req.body;
+    try {
+      const offer = await Offer.findOne({ code: promocode });
+      if (offer) {
+        res.json({ status: 'ok', discount: offer.discount });
+      } else {
+        res.json({ status: 'error', message: 'Invalid promo code' });
+      }
+    } catch (err) {
+      res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+  });
+  
+  // Booking endpoint
+  app.post('/booking', async (req, res) => {
     console.log('Request received:', req.body);
     try {
-        console.log("hi");
-        const { name, age, email, persons, city, startdate, enddate, adults, children,mobile, totalamount } = req.body;
-        const newBooking = new BookingModel({ name, age, email, persons, city, startdate, enddate, adults, children,mobile,totalamount });
-        await newBooking.save();
-        console.log("Data saved succesfully")
-        res.json({ status: "ok" });
+      const { name, age, email, persons, city, startdate, enddate, adults, children, mobile, totalamount, promocode } = req.body;
+  
+      // Validate promo code
+      let discount = 0;
+      if (promocode) {
+        const offer = await Offer.findOne({ code: promocode });
+        if (offer) {
+          discount = offer.discount;
+        } else {
+          return res.status(400).json({ status: 'error', message: 'Invalid promo code' });
+        }
+      }
+  
+      // Apply discount
+      const discountedAmount = totalamount - (totalamount * discount / 100);
+  
+      const newBooking = new BookingModel({ name, age, email, persons, city, startdate, enddate, adults, children, mobile, totalamount: discountedAmount, promocode });
+      await newBooking.save();
+      console.log('Data saved successfully');
+      res.json({ status: 'ok' });
     } catch (err) {
-        console.log(err)
-        res.status(500).json({ error: "Internal server error" });
+      console.log(err);
+      res.status(500).json({ status: 'error', message: 'Internal server error' });
     }
-});
+  });
 
 app.get('/allusers', async (req, res) => {
     try {

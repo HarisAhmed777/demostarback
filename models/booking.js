@@ -8,8 +8,6 @@ const BookingsSchema = new mongoose.Schema({
   city: String,
   startdate: Date,
   enddate: Date,
-  adults: Number,
-  children: Number,
   mobile: Number,
   totalamount: Number,
   promocode: String, 

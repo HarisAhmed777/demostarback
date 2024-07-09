@@ -102,8 +102,8 @@ app.post('/validate-promocode', async (req, res) => {
   app.post('/booking', async (req, res) => {
     console.log('Request received:', req.body);
     try {
-      const { name, age, email, persons, city, startdate, enddate, adults, children, mobile, totalamount, promocode } = req.body;
-  
+      const { name, age, email, persons, city, startdate, enddate, mobile, totalamount, promocode } = req.body;
+      
       // Validate promo code
       let discount = 0;
       if (promocode) {
@@ -114,11 +114,23 @@ app.post('/validate-promocode', async (req, res) => {
           return res.status(400).json({ status: 'error', message: 'Invalid promo code' });
         }
       }
-  
+      
       // Apply discount
       const discountedAmount = totalamount - (totalamount * discount / 100);
-  
-      const newBooking = new BookingModel({ name, age, email, persons, city, startdate, enddate, adults, children, mobile, totalamount: discountedAmount, promocode });
+      
+      const newBooking = new BookingModel({ 
+        name, 
+        age, 
+        email, 
+        persons, 
+        city, 
+        startdate, 
+        enddate, 
+        mobile, 
+        totalamount: discountedAmount, 
+        promocode 
+      });
+      
       await newBooking.save();
       console.log('Data saved successfully');
       res.json({ status: 'ok' });

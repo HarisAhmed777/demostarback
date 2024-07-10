@@ -84,6 +84,7 @@ app.post('/verify-otp', (req, res) => {
   }
 });
 
+const emailOtpStore = {};
 
 
 app.post('/send-email-otp', (req, res) => {

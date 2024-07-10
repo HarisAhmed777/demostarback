@@ -38,6 +38,87 @@ mongoose.connect(process.env.MONGO_URL, {
     console.error("Error in connecting db", e);
 });
 
+const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, EMAIL_USER, EMAIL_PASS, EMAIL_SERVICE } = process.env;
+
+
+const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+let otpStore = {}; // This is for storing OTPs in memory. Use a database in production.
+let emailVerificationStore = {}; // This is for storing email verification tokens in memory. Use a database in production.
+
+const transporter = nodemailer.createTransport({
+  service: EMAIL_SERVICE,
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
+  }
+});
+
+// Send OTP
+app.post('/send-otp', (req, res) => {
+  const { mobilenumber } = req.body;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  client.messages.create({
+    body: `Your verification code is ${otp}`,
+    from: TWILIO_PHONE_NUMBER,
+    to: mobilenumber
+  }).then(message => {
+    otpStore[mobilenumber] = otp;
+    res.json({ success: true, message: 'OTP sent successfully' });
+  }).catch(err => {
+    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+  });
+});
+
+// Verify OTP
+app.post('/verify-otp', (req, res) => {
+  const { mobilenumber, otp } = req.body;
+  
+  if (otpStore[mobilenumber] === otp) {
+    delete otpStore[mobilenumber];
+    res.json({ success: true, message: 'OTP verified successfully' });
+  } else {
+    res.status(400).json({ success: false, message: 'Invalid OTP' });
+  }
+});
+
+// Send Verification Email
+app.post('/send-verification-email', (req, res) => {
+  const { email } = req.body;
+  const token = Math.random().toString(36).substring(2);
+  const verificationLink = `https://capable-medovik-acac7d.netlify.app/verify-email?token=${token}`;
+
+  const mailOptions = {
+    from: EMAIL_USER,
+    to: email,
+    subject: 'Email Verification',
+    text: `Click this link to verify your email: ${verificationLink}`
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      res.status(500).json({ success: false, message: 'Failed to send verification email' });
+    } else {
+      emailVerificationStore[token] = email;
+      res.json({ success: true, message: 'Verification email sent successfully' });
+    }
+  });
+});
+
+// Verify Email Token
+app.get('/verify-email', (req, res) => {
+  const { token } = req.query;
+
+  if (emailVerificationStore[token]) {
+    const email = emailVerificationStore[token];
+    delete emailVerificationStore[token];
+    res.json({ success: true, message: 'Email verified successfully', email });
+  } else {
+    res.status(400).json({ success: false, message: 'Invalid or expired token' });
+  }
+});
+
 
 
 
@@ -278,7 +359,6 @@ app.post('/purchase-package', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
 
 app.post('/forgotpassword', async (req, res) => {
     const { email } = req.body;

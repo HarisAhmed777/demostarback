@@ -56,7 +56,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const TEXTLOCAL_API_KEY = 'NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=';
-const SENDER_ID = 'Hariss'; 
+const SENDER_ID = 'TXTLCL'; 
 
 // Send OTP
 app.post('/send-otp', (req, res) => {

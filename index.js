@@ -110,11 +110,11 @@ app.post('/send-email-otp', (req, res) => {
 });
 
 app.post('/verify-email-otp', (req, res) => {
-    const { email, otp } = req.body;
+    const { email, emailOtp } = req.body;
     console.log(email);
-    console.log(otp);
+    console.log(emailOtp);
 
-    if (emailOtpStore[email] && emailOtpStore[email] === otp) {
+    if (emailOtpStore[email] && emailOtpStore[email] === emailOtp) {
         delete emailOtpStore[email];
         res.json({ success: true, message: 'Email verified successfully' });
     } else {

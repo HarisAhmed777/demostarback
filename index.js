@@ -84,6 +84,39 @@ app.post('/verify-otp', (req, res) => {
   }
 });
 
+
+
+app.post('/send-email-otp', (req, res) => {
+    const { email } = req.body;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+
+    const mailOptions = {
+        from: EMAIL_USER,
+        to: email,
+        subject: 'Email Verification OTP',
+        text: `Your OTP for email verification is: ${otp}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).json({ success: false, message: 'Failed to send OTP' });
+        } else {
+            emailOtpStore[email] = otp;
+            res.json({ success: true, message: 'OTP sent successfully' });
+        }
+    });
+});
+
+app.post('/verify-email-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (emailOtpStore[email] && emailOtpStore[email] === otp) {
+        delete emailOtpStore[email];
+        res.json({ success: true, message: 'Email verified successfully' });
+    } else {
+        res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+});
 // Send Verification Email
 app.post('/send-verification-email', (req, res) => {
   const { email } = req.body;

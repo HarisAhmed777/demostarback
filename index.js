@@ -19,7 +19,7 @@ const path = require('path');
 const app = express();
 
 app.use(cors({
-    origin: ["https://capable-medovik-acac7d.netlify.app","http://localhost:5173"],
+    origin: ["https://capable-medovik-acac7d.netlify.app","https://spiffy-lolly-be4eb1.netlify.app","http://localhost:5173"],
     methods: ["GET", "POST", "PUT"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]

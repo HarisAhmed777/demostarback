@@ -103,6 +103,7 @@ app.post('/send-email-otp', (req, res) => {
             return res.status(500).json({ success: false, message: 'Failed to send OTP' });
         } else {
             emailOtpStore[email] = otp;
+            console.log(emailOtpStore);
             res.json({ success: true, message: 'OTP sent successfully' });
         }
     });
@@ -110,6 +111,8 @@ app.post('/send-email-otp', (req, res) => {
 
 app.post('/verify-email-otp', (req, res) => {
     const { email, otp } = req.body;
+    console.log(email);
+    console.log(otp);
 
     if (emailOtpStore[email] && emailOtpStore[email] === otp) {
         delete emailOtpStore[email];

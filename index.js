@@ -64,6 +64,7 @@ const otpStore = {}; // Ideally store in a database
 // Endpoint to send OTP
 app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
+    console.log(mobilenumber);
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
     axios.post(`https://api.msg91.com/api/v5/otp`, null, {

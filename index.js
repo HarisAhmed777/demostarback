@@ -44,7 +44,6 @@ const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, EMAIL_USER, 
 
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-let otpStore = {}; // This is for storing OTPs in memory. Use a database in production.
 let emailVerificationStore = {}; // This is for storing email verification tokens in memory. Use a database in production.
 
 const transporter = nodemailer.createTransport({
@@ -55,35 +54,48 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+const TEXTLOCAL_API_KEY = 'NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=';
+const SENDER_ID = 'Hariss'; 
+
 // Send OTP
 app.post('/send-otp', (req, res) => {
-  const { mobilenumber } = req.body;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  client.messages.create({
-    body: `Your verification code is ${otp}`,
-    from: TWILIO_PHONE_NUMBER,
-    to: mobilenumber
-  }).then(message => {
-    otpStore[mobilenumber] = otp;
-    res.json({ success: true, message: 'OTP sent successfully' });
-  }).catch(err => {
-    res.status(500).json({ success: false, message: 'Failed to send OTP' });
-  });
+    const { mobilenumber } = req.body;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
+
+    // Send OTP via Textlocal API
+    axios.post('https://api.textlocal.in/send', null, {
+        params: {
+            apiKey: TEXTLOCAL_API_KEY,
+            numbers: mobilenumber,
+            message: `Your OTP for verification is ${otp}`,
+            sender: SENDER_ID
+        }
+    })
+    .then(response => {
+        console.log(response.data);
+        res.json({ success: true, message: 'OTP sent successfully' });
+    })
+    .catch(error => {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Failed to send OTP' });
+    });
 });
 
-// Verify OTP
+// Endpoint to verify OTP (sample implementation)
+const otpStore = {}; // Use this to store OTPs for verification, ideally store in a database
+
 app.post('/verify-otp', (req, res) => {
-  const { mobilenumber, otp } = req.body;
-  
-  if (otpStore[mobilenumber] === otp) {
-    delete otpStore[mobilenumber];
-    res.json({ success: true, message: 'OTP verified successfully' });
-  } else {
-    res.status(400).json({ success: false, message: 'Invalid OTP' });
-  }
-});
+    const { mobilenumber, otp } = req.body;
 
+    // Verify OTP logic (example)
+    if (otpStore[mobilenumber] && otpStore[mobilenumber] === otp) {
+        // OTP verified successfully
+        res.json({ success: true, message: 'OTP verified successfully' });
+    } else {
+        // Invalid OTP
+        res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+});
 const emailOtpStore = {};
 
 

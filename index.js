@@ -55,25 +55,31 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const TEXTLOCAL_API_KEY = 'NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=';
-const SENDER_ID = 'TXTLCL'; 
+const MSG91_AUTHKEY = "426059AVvQrYmOjVg8668ed138P1";
+const SENDER_ID = "Haris345";
+const ROUTE = 4;
 
-// Send OTP
+const otpStore = {}; // Ideally store in a database
+
+// Endpoint to send OTP
 app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    // Send OTP via Textlocal API
-    axios.post('https://api.textlocal.in/send', null, {
+    axios.post(`https://api.msg91.com/api/v5/otp`, null, {
         params: {
-            apiKey: TEXTLOCAL_API_KEY,
-            numbers: mobilenumber,
+            authkey: MSG91_AUTHKEY,
+            mobile: mobilenumber,
+            sender: SENDER_ID,
             message: `Your OTP for verification is ${otp}`,
-            sender: SENDER_ID
+            otp: otp,
+            otp_length: 6,
+            route: ROUTE
         }
     })
     .then(response => {
         console.log(response.data);
+        otpStore[mobilenumber] = otp;
         res.json({ success: true, message: 'OTP sent successfully' });
     })
     .catch(error => {
@@ -82,18 +88,14 @@ app.post('/send-otp', (req, res) => {
     });
 });
 
-// Endpoint to verify OTP (sample implementation)
-const otpStore = {}; // Use this to store OTPs for verification, ideally store in a database
-
+// Endpoint to verify OTP
 app.post('/verify-otp', (req, res) => {
     const { mobilenumber, otp } = req.body;
 
-    // Verify OTP logic (example)
     if (otpStore[mobilenumber] && otpStore[mobilenumber] === otp) {
-        // OTP verified successfully
+        delete otpStore[mobilenumber]; // Clear the OTP once verified
         res.json({ success: true, message: 'OTP verified successfully' });
     } else {
-        // Invalid OTP
         res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
 });

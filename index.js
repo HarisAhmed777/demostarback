@@ -70,7 +70,7 @@ app.post('/send-otp', async (req, res) => {
     };
 
     try {
-        const response = await fast2sms.sendMessage(options);
+        const response = fast2sms.sendMessage(options);
         console.log('OTP Sent:', response);
         if (response.return) {
             // otpStore[mobilenumber] = otp;

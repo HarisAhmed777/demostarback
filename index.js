@@ -66,7 +66,7 @@ app.post('/send-otp', async (req, res) => {
     const options = {
         authorization: FAST2SMS_API_KEY,
         message: `Your OTP for mobile verification is ${otp}. Thanks, Fast2SMS.`,
-        numbers: [8122957755,9042567074]
+        numbers: 8122957755
     };
 
     try {

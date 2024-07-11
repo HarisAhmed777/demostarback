@@ -54,7 +54,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const FAST2SMS_API_KEY = "uQatedbOZDVplUNXMwL43Pj9JhirB02HzF7ysTWKEvg5nqof1IMoD1p9gxRPG6wZ5kO8L7AmY4CicU2I";
+const FAST2SMS_API_KEY ="uQatedbOZDVplUNXMwL43Pj9JhirB02HzF7ysTWKEvg5nqof1IMoD1p9gxRPG6wZ5kO8L7AmY4CicU2I";
 const otpStore = {}; // Ideally store in a database
 
 // Endpoint to send OTP

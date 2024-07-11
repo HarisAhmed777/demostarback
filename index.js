@@ -40,10 +40,9 @@ mongoose.connect(process.env.MONGO_URL, {
     console.error("Error in connecting db", e);
 });
 
-const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, EMAIL_USER, EMAIL_PASS, EMAIL_SERVICE } = process.env;
+const { EMAIL_USER, EMAIL_PASS, EMAIL_SERVICE } = process.env;
 
 
-const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 let emailVerificationStore = {}; // This is for storing email verification tokens in memory. Use a database in production.
 
@@ -55,36 +54,30 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const MSG91_AUTHKEY = "426059AVvQrYmOjVg8668ed138P1";
-const SENDER_ID = "Haris345";
-const ROUTE = 4;
-
+const FAST2SMS_API_KEY = "uQatedbOZDVplUNXMwL43Pj9JhirB02HzF7ysTWKEvg5nqof1IMoD1p9gxRPG6wZ5kO8L7AmY4CicU2I";
 const otpStore = {}; // Ideally store in a database
 
 // Endpoint to send OTP
 app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
-    console.log(mobilenumber);
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    axios.post(`https://api.msg91.com/api/v5/otp`, null, {
+    axios.post('https://www.fast2sms.com/dev/bulkV2', null, {
         params: {
-            authkey: MSG91_AUTHKEY,
-            mobile: mobilenumber,
-            sender: SENDER_ID,
+            authorization: FAST2SMS_API_KEY,
             message: `Your OTP for verification is ${otp}`,
-            otp: otp,
-            otp_length: 6,
-            route: ROUTE
+            numbers: mobilenumber,
+            route: 'q',
+            language: 'english'
         }
     })
     .then(response => {
-        console.log(response.data);
+        console.log('OTP Sent:', response.data);
         otpStore[mobilenumber] = otp;
         res.json({ success: true, message: 'OTP sent successfully' });
     })
     .catch(error => {
-        console.error(error);
+        console.error('Error sending OTP:', error.response ? error.response.data : error.message);
         res.status(500).json({ success: false, message: 'Failed to send OTP' });
     });
 });

@@ -60,7 +60,7 @@ const otpStore = {}; // Ideally store in a database
 
 // Endpoint to send OTP
 app.post('/send-otp', async (req, res) => {
-    const { mobilenumber } = req.body;
+    const { mobilenumber } = 8122957755;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
     const options = {

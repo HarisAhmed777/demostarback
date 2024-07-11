@@ -13,6 +13,7 @@ const PurchasePackageModel = require('./models/Packagepurshase');
 const Form = require('./models/formmodel.js');
 const Offer = require('./models/offer');
 const twilio = require('twilio');
+const fast2sms = require('fast-two-sms');
 var nodemailer = require("nodemailer");
 const axios = require('axios');
 
@@ -54,43 +55,33 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
-const TEXTLOCAL_API_KEY ="NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=";
-const TEXTLOCAL_SENDER ="TXTLCL";
+const FAST2SMS_API_KEY ="uQatedbOZDVplUNXMwL43Pj9JhirB02HzF7ysTWKEvg5nqof1IMoD1p9gxRPG6wZ5kO8L7AmY4CicU2I";
 const otpStore = {}; // Ideally store in a database
-const TEXTLOCAL_TEMPLATE_ID = 1107161517879065578
 
-app.post('/send-otp', (req, res) => {
+// Endpoint to send OTP
+app.post('/send-otp', async (req, res) => {
     const { mobilenumber } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    const message = `Your OTP for mobile verification is ${otp}`; // Use a simple message if template fails
-    const numbers = mobilenumber;
+    const options = {
+        authorization: FAST2SMS_API_KEY,
+        message: `Your OTP for mobile verification is ${otp}. Thanks, Fast2SMS.`,
+        numbers: [mobilenumber]
+    };
 
-    axios.post('https://api.textlocal.in/send/', null, {
-        params: {
-            apiKey: TEXTLOCAL_API_KEY,
-            numbers,
-            sender: TEXTLOCAL_SENDER,
-            message: `Your OTP for mobile verification is ${otp}. Thanks, Textlocal.`,
-            template_id:TEXTLOCAL_TEMPLATE_ID, // Ensure this matches your template ID
-            // Custom parameters to match your template placeholders
-            SampleOTP: otp
-        }
-    })
-    .then(response => {
-        console.log('OTP Sent:', response.data);
-        if (response.data.status === 'success') {
+    try {
+        const response = await fast2sms.sendMessage(options);
+        console.log('OTP Sent:', response);
+        if (response.return) {
             otpStore[mobilenumber] = otp;
             res.json({ success: true, message: 'OTP sent successfully' });
         } else {
             res.status(500).json({ success: false, message: 'Failed to send OTP' });
         }
-    })
-    .catch(error => {
-        console.error('Error sending OTP:', error.response ? error.response.data : error.message);
+    } catch (error) {
+        console.error('Error sending OTP:', error);
         res.status(500).json({ success: false, message: 'Failed to send OTP' });
-    });
+    }
 });
 
 // Endpoint to verify OTP

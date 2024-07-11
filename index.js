@@ -54,7 +54,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const FAST2SMS_API_KEY ="uQatedbOZDVplUNXMwL43Pj9JhirB02HzF7ysTWKEvg5nqof1IMoD1p9gxRPG6wZ5kO8L7AmY4CicU2I";
+
+const TEXTLOCAL_API_KEY ="NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=";
+const TEXTLOCAL_SENDER ="TXTLCL";
 const otpStore = {}; // Ideally store in a database
 
 // Endpoint to send OTP
@@ -62,19 +64,25 @@ app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    axios.post('https://www.fast2sms.com/dev/bulkV2', null, {
+    const message = `Your OTP for verification is ${otp}`;
+    const numbers = mobilenumber;
+
+    axios.post('https://api.textlocal.in/send/', null, {
         params: {
-            authorization: FAST2SMS_API_KEY,
-            message: `Your OTP for verification is ${otp}`,
-            numbers: mobilenumber,
-            route: 'q',
-            language: 'english'
+            apiKey: TEXTLOCAL_API_KEY,
+            numbers,
+            message,
+            sender: TEXTLOCAL_SENDER
         }
     })
     .then(response => {
         console.log('OTP Sent:', response.data);
-        otpStore[mobilenumber] = otp;
-        res.json({ success: true, message: 'OTP sent successfully' });
+        if (response.data.status === 'success') {
+            otpStore[mobilenumber] = otp;
+            res.json({ success: true, message: 'OTP sent successfully' });
+        } else {
+            res.status(500).json({ success: false, message: 'Failed to send OTP' });
+        }
     })
     .catch(error => {
         console.error('Error sending OTP:', error.response ? error.response.data : error.message);
@@ -93,6 +101,7 @@ app.post('/verify-otp', (req, res) => {
         res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
 });
+
 const emailOtpStore = {};
 
 

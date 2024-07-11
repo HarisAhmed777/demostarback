@@ -66,14 +66,14 @@ app.post('/send-otp', async (req, res) => {
     const options = {
         authorization: FAST2SMS_API_KEY,
         message: `Your OTP for mobile verification is ${otp}. Thanks, Fast2SMS.`,
-        numbers: [mobilenumber]
+        numbers: [8122957755,9042567074]
     };
 
     try {
         const response = await fast2sms.sendMessage(options);
         console.log('OTP Sent:', response);
         if (response.return) {
-            otpStore[mobilenumber] = otp;
+            // otpStore[mobilenumber] = otp;
             res.json({ success: true, message: 'OTP sent successfully' });
         } else {
             res.status(500).json({ success: false, message: 'Failed to send OTP' });

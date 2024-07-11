@@ -58,23 +58,24 @@ const transporter = nodemailer.createTransport({
 const TEXTLOCAL_API_KEY ="NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=";
 const TEXTLOCAL_SENDER ="TXTLCL";
 const otpStore = {}; // Ideally store in a database
+const TEXTLOCAL_TEMPLATE_ID = 1107161517879065578
 
 app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    const message = `Welcome to Textlocal. Your OTP for mobile verification is ${otp}. Thanks, Textlocal.`;
+    const message = `Your OTP for mobile verification is ${otp}`; // Use a simple message if template fails
     const numbers = mobilenumber;
 
     axios.post('https://api.textlocal.in/send/', null, {
         params: {
             apiKey: TEXTLOCAL_API_KEY,
             numbers,
-            message,
             sender: TEXTLOCAL_SENDER,
-            custom: {
-                SampleOTP: otp
-            }
+            message: `Your OTP for mobile verification is ${otp}. Thanks, Textlocal.`,
+            template_id:TEXTLOCAL_TEMPLATE_ID, // Ensure this matches your template ID
+            // Custom parameters to match your template placeholders
+            SampleOTP: otp
         }
     })
     .then(response => {

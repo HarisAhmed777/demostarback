@@ -59,12 +59,11 @@ const TEXTLOCAL_API_KEY ="NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=";
 const TEXTLOCAL_SENDER ="TXTLCL";
 const otpStore = {}; // Ideally store in a database
 
-// Endpoint to send OTP
 app.post('/send-otp', (req, res) => {
     const { mobilenumber } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
 
-    const message = `Your OTP for verification is ${otp}`;
+    const message = `Welcome to Textlocal. Your OTP for mobile verification is ${otp}. Thanks, Textlocal.`;
     const numbers = mobilenumber;
 
     axios.post('https://api.textlocal.in/send/', null, {
@@ -72,7 +71,10 @@ app.post('/send-otp', (req, res) => {
             apiKey: TEXTLOCAL_API_KEY,
             numbers,
             message,
-            sender: TEXTLOCAL_SENDER
+            sender: TEXTLOCAL_SENDER,
+            custom: {
+                SampleOTP: otp
+            }
         }
     })
     .then(response => {

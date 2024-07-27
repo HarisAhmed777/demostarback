@@ -16,6 +16,7 @@ const twilio = require('twilio');
 const fast2sms = require('fast-two-sms');
 var nodemailer = require("nodemailer");
 const axios = require('axios');
+const { Vonage } = require('@vonage/server-sdk')
 
 const path = require('path');
 
@@ -54,49 +55,13 @@ const transporter = nodemailer.createTransport({
     pass: EMAIL_PASS
   }
 });
-
-const TEXTLOCAL_API_KEY = "NmE2MTY4NmU1YTQxNDE0NDM5NGI1NzM1NGI0Mjc3MzI=";
-const TEXTLOCAL_SENDER = 600010;
-const otpStore = {}; // Ideally store in a database
-app.post('/send-otp', async (req, res) => {
-    const { mobilenumber } = req.body;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
-
-    const message = `Your OTP for mobile verification is ${otp}. Thanks, Textlocal.`;
-    const url = `https://api.textlocal.in/send/?apikey=${TEXTLOCAL_API_KEY}&numbers=${mobilenumber}&message=${encodeURIComponent(message)}&sender=${TEXTLOCAL_SENDER}`;
-
-    try {
-        const response = await axios.get(url);
-        console.log('OTP Sent:', response.data);
-        if (response.data.status === 'success') {
-            otpStore[mobilenumber] = otp;
-            res.json({ success: true, message: 'OTP sent successfully' });
-        } else {
-            res.status(500).json({ success: false, message: 'Failed to send OTP' });
-        }
-    } catch (error) {
-        console.error('Error sending OTP:', error);
-        res.status(500).json({ success: false, message: 'Failed to send OTP' });
-    }
-});
-
-// Endpoint to verify OTP
-app.post('/verify-otp', (req, res) => {
-    const { mobilenumber, otp } = req.body;
-    if (otpStore[mobilenumber] && otpStore[mobilenumber] === otp) {
-        delete otpStore[mobilenumber]; // Clear the OTP once verified
-        res.json({ success: true, message: 'OTP verified successfully' });
-    } else {
-        res.status(400).json({ success: false, message: 'Invalid OTP' });
-    }
-});
-
 const emailOtpStore = {};
 
 
 app.post('/send-email-otp', (req, res) => {
     const { email } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+    const expirationTime = Date.now() + 2 * 60 * 1000; // OTP expiration time set to 2 minutes
 
     const mailOptions = {
         from: EMAIL_USER,
@@ -109,8 +74,28 @@ app.post('/send-email-otp', (req, res) => {
         if (error) {
             return res.status(500).json({ success: false, message: 'Failed to send OTP' });
         } else {
-            emailOtpStore[email] = otp;
-            console.log(emailOtpStore);
+            emailOtpStore[email] = { otp, expirationTime };
+            res.json({ success: true, message: 'OTP sent successfully' });
+        }
+    });
+});
+app.post('/resend-email-otp', (req, res) => {
+    const { email } = req.body;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+    const expirationTime = Date.now() + 2 * 60 * 1000; // OTP expiration time set to 2 minutes
+
+    const mailOptions = {
+        from: EMAIL_USER,
+        to: email,
+        subject: 'Email Verification OTP',
+        text: `Your OTP for email verification is: ${otp}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).json({ success: false, message: 'Failed to send OTP' });
+        } else {
+            emailOtpStore[email] = { otp, expirationTime };
             res.json({ success: true, message: 'OTP sent successfully' });
         }
     });
@@ -118,12 +103,22 @@ app.post('/send-email-otp', (req, res) => {
 
 app.post('/verify-email-otp', (req, res) => {
     const { email, emailOtp } = req.body;
-    console.log(email);
-    console.log(emailOtp);
 
-    if (emailOtpStore[email] && emailOtpStore[email] === emailOtp) {
-        delete emailOtpStore[email];
-        res.json({ success: true, message: 'Email verified successfully' });
+    const otpRecord = emailOtpStore[email];
+
+    if (otpRecord) {
+        const currentTime = Date.now();
+        if (currentTime > otpRecord.expirationTime) {
+            delete emailOtpStore[email];
+            return res.status(400).json({ success: false, message: 'OTP has expired' });
+        }
+
+        if (otpRecord.otp === emailOtp) {
+            delete emailOtpStore[email];
+            res.json({ success: true, message: 'Email verified successfully' });
+        } else {
+            res.status(400).json({ success: false, message: 'Invalid OTP' });
+        }
     } else {
         res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
@@ -226,7 +221,6 @@ app.post('/validate-promocode', async (req, res) => {
   
   // Booking endpoint
   app.post('/booking', async (req, res) => {
-    console.log('Request received:', req.body);
     try {
       const { name, age, email, persons, city, startdate, enddate, mobile, totalamount, promocode } = req.body;
       
@@ -358,14 +352,23 @@ app.put('/user/update', async (req, res) => {
 
 app.post('/feedback', async (req, res) => {
     try {
-        const { name, email, feedback } = req.body;
-        const newFeedback = new FeedbackModel({ name, email, feedback });
+        const { firstname, secondname, email, phonenumber, feedback } = req.body;
+
+        // Validate data
+        if (!firstname || !secondname || !email || !phonenumber || !feedback) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Create and save new feedback
+        const newFeedback = new FeedbackModel({ firstname, secondname, email, phonenumber, feedback });
         await newFeedback.save();
-        res.status(201).json(newFeedback);
+        res.status(200).json(newFeedback);
     } catch (err) {
+        console.error("Error saving feedback:", err);
         res.status(500).json({ message: err.message });
     }
 });
+
 
 
 app.post('/submit-form', async (req, res) => {
@@ -415,7 +418,6 @@ app.post('/forgotpassword', async (req, res) => {
         const secret = process.env.JWT_SECRET + oldUser.password;
         const token = jwt.sign({ email: oldUser.email, id: oldUser._id }, secret, { expiresIn: '5m' });
         const link = `https://capable-medovik-acac7d.netlify.app/resetpassword/${oldUser._id}/${token}`;
-        console.log(link);
         
 var transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -440,9 +442,7 @@ var transporter = nodemailer.createTransport({
   transporter.sendMail(mailOptions, function(error, info){
     if (error) {
       console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
+    } 
   });
         
         
@@ -466,11 +466,9 @@ app.get("*",(req,res)=>{
 })
 
     app.post("/resetpassword/:_id/:token", async (req, res) => {
-        console.log("entering into reset password");
         const { _id, token } = req.params;
         const { password } = req.body;
-        console.log(_id);
-        console.log(token);
+      
 
         try {
             const user = await UserModel.findById(_id);

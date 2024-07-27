@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vonage/server-sdk": "^3.15.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
@@ -21,6 +22,7 @@
     "mongoose": "^8.4.4",
     "nodemailer": "^6.9.14",
     "nodemon": "^3.1.4",
+    "sendotp": "^1.2.9",
     "twilio": "^5.2.2"
   }
 }

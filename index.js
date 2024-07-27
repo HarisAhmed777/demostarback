@@ -169,6 +169,7 @@ app.post('/register', async (req, res) => {
         if (existingUser) {
             return res.status(409).json({ error: "User already exists" });
         }
+        console.log('hi');
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new UserModel({
             firstname,
@@ -179,7 +180,7 @@ app.post('/register', async (req, res) => {
             role: "user"
         });
         await newUser.save();
-        res.json({ status: "Account created successfully" });
+        res.status(200).json({ status: "Account created successfully" });
     } catch (err) {
         res.status(500).json({ error: "Internal server error" });
     }

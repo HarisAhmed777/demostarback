@@ -12,12 +12,9 @@ const FeedbackModel = require('./models/feedback');
 const PurchasePackageModel = require('./models/Packagepurshase');
 const Form = require('./models/formmodel.js');
 const Offer = require('./models/offer');
-const twilio = require('twilio');
-const fast2sms = require('fast-two-sms');
 var nodemailer = require("nodemailer");
 const axios = require('axios');
-const { Vonage } = require('@vonage/server-sdk')
-
+const PackageModel =  require('./models/packagemodel')
 const path = require('path');
 
 const app = express();
@@ -194,6 +191,7 @@ app.post('/login', async (req, res) => {
             return res.status(404).json({ error: "No record exists" });
         }
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        console.log(isPasswordCorrect);
         if (!isPasswordCorrect) {
             return res.status(401).json({ error: "The password is incorrect" });
         }
@@ -223,21 +221,10 @@ app.post('/validate-promocode', async (req, res) => {
   // Booking endpoint
   app.post('/booking', async (req, res) => {
     try {
-      const { name, age, email, persons, city, startdate, enddate, mobile, totalamount, promocode } = req.body;
-      
-      // Validate promo code
-      let discount = 0;
-      if (promocode) {
-        const offer = await Offer.findOne({ code: promocode });
-        if (offer) {
-          discount = offer.discount;
-        } else {
-          return res.status(400).json({ status: 'error', message: 'Invalid promo code' });
-        }
-      }
+      const { booking_id,name, age, email, persons, city, startdate, enddate, mobile, totalamount, promocode } = req.body;
       const discountedAmount = totalamount;
-      
       const newBooking = new BookingModel({ 
+        booking_id,
         name, 
         age, 
         email, 
@@ -251,7 +238,6 @@ app.post('/validate-promocode', async (req, res) => {
       });
       
       await newBooking.save();
-      console.log('Data saved successfully');
       res.json({ status: 'ok' });
     } catch (err) {
       console.log(err);
@@ -273,6 +259,17 @@ app.get('/allbookings', async (req, res) => {
     try {
         const allbookings = await BookingModel.find();
         res.json(allbookings);
+    } catch (error) {
+        console.error("Error fetching bookings:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+app.get('/schoolpackage',async(req,res)=>{
+    try {
+        const allpackages = await PackageModel.find();
+        res.json(allpackages);
     } catch (error) {
         console.error("Error fetching bookings:", error);
         res.status(500).json({ error: 'Internal server error' });

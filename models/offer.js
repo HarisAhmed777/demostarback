@@ -7,15 +7,4 @@ const offerSchema = new mongoose.Schema({
 });
 
 const Offer = mongoose.model('Offer', offerSchema);
-
-const offers = [
-];
-
-Offer.insertMany(offers)
-  .then(() => {
-  })
-  .catch((err) => {
-    console.error(err);
-  });
-
   module.exports = Offer;
